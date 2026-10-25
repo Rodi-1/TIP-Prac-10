@@ -7,27 +7,44 @@ import (
 )
 
 type Config struct {
-	Port      string
-	JWTSecret []byte
-	JWTTTL    time.Duration
+	Port, KeyDir, ActiveKID string
+	JWTTTL, RefreshTTL      time.Duration
 }
 
 func Load() (Config, error) {
-	port := os.Getenv("APP_PORT")
-	if port == "" {
-		port = "8080"
+	c := Config{Port: os.Getenv("APP_PORT"), KeyDir: os.Getenv("JWT_KEY_DIR"), ActiveKID: os.Getenv("JWT_ACTIVE_KID")}
+	if c.Port == "" {
+		c.Port = "8080"
 	}
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		return Config{}, fmt.Errorf("JWT_SECRET is required")
+	c.Port = ":" + c.Port
+	if c.KeyDir == "" {
+		c.KeyDir = ".keys"
 	}
-	ttl := os.Getenv("JWT_TTL")
-	if ttl == "" {
-		ttl = "15m"
+	if c.ActiveKID == "" {
+		c.ActiveKID = "key2"
 	}
-	duration, e := time.ParseDuration(ttl)
-	if e != nil || duration <= 0 {
-		return Config{}, fmt.Errorf("bad JWT_TTL")
+	var e error
+	c.JWTTTL, e = duration("JWT_TTL", 15*time.Minute)
+	if e != nil {
+		return c, e
 	}
-	return Config{Port: ":" + port, JWTSecret: []byte(secret), JWTTTL: duration}, nil
+	c.RefreshTTL, e = duration("JWT_REFRESH_TTL", 7*24*time.Hour)
+	if e != nil {
+		return c, e
+	}
+	if c.RefreshTTL <= c.JWTTTL {
+		return c, fmt.Errorf("refresh TTL must exceed access TTL")
+	}
+	return c, nil
+}
+func duration(key string, fallback time.Duration) (time.Duration, error) {
+	s := os.Getenv(key)
+	if s == "" {
+		return fallback, nil
+	}
+	d, e := time.ParseDuration(s)
+	if e != nil || d <= 0 {
+		return 0, fmt.Errorf("invalid %s", key)
+	}
+	return d, nil
 }

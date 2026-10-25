@@ -37,3 +37,12 @@ func (r *UserMem) CheckPassword(email, password string) (core.User, error) {
 	}
 	return u.User, nil
 }
+
+func (r *UserMem) ByID(id int64) (core.User, error) {
+	for _, u := range r.users {
+		if u.User.ID == id {
+			return u.User, nil
+		}
+	}
+	return core.User{}, ErrBadCredentials
+}

@@ -12,6 +12,10 @@ func main() {
 	if e != nil {
 		log.Fatal(e)
 	}
+	handler, e := router.Build(cfg)
+	if e != nil {
+		log.Fatal(e)
+	}
 	log.Println("listening on", cfg.Port)
-	log.Fatal(http.ListenAndServe(cfg.Port, router.Build(cfg)))
+	log.Fatal(http.ListenAndServe(cfg.Port, handler))
 }

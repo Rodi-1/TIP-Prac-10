@@ -4,6 +4,7 @@
 /coverage.out
 *.test.exe
 /*.exe
+/.keys/
 # Local reports and generated results
 *.docx
 *.pdf

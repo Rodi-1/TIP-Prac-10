@@ -21,7 +21,7 @@ func AuthN(v jwt.Validator) func(http.Handler) http.Handler {
 				return
 			}
 			c, e := v.Parse(parts[1])
-			if e != nil {
+			if e != nil || c["kind"] != "access" {
 				Error(w, 401, "unauthorized")
 				return
 			}
